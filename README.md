@@ -52,7 +52,9 @@ This repository contains the code used in the Python Flask Authentication
 ## Reference
 
 [Python Flask Authentication Tutorial - Learn Flask Login](https://www.youtube.com/watch?v=71EU8gnZqZQ)
+
 [github](https://github.com/arpanneupane19/Python-Flask-Authentication-Tutorial)
 
 [Flask-SQLAlchemy 사용해보기](https://kimjingo.tistory.com/116)
+
 [Flask-SQLAlchemy db.create_all() raises RuntimeError](https://stackoverflow.com/questions/73961938/flask-sqlalchemy-db-create-all-raises-runtimeerror-working-outside-of-applicat)
