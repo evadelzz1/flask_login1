@@ -8,7 +8,7 @@ from flask_bcrypt import Bcrypt
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
-app.config['SECRET_KEY'] = 'thisisasecretkey'
+app.config['SECRET_KEY'] = 'secret_key'     # python -c 'import secrets; print(secrets.token_hex())' 
 
 db = SQLAlchemy(app)
 bcrypt = Bcrypt(app)
@@ -28,19 +28,23 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(20), nullable=False, unique=True)
     password = db.Column(db.String(80), nullable=False)
 
-
 class RegisterForm(FlaskForm):
     username = StringField(validators=[
-                           InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Username"})
+            InputRequired(),
+            Length(min=4, max=20)
+        ],
+        render_kw={"placeholder": "Username"})
 
     password = PasswordField(validators=[
-                             InputRequired(), Length(min=8, max=80)], render_kw={"placeholder": "Password"})
+            InputRequired(),
+            Length(min=8, max=80)
+        ],
+        render_kw={"placeholder": "Password"})
 
     submit = SubmitField('Register')
 
     def validate_username(self, username):
-        existing_user_username = User.query.filter_by(
-            username=username.data).first()
+        existing_user_username = User.query.filter_by(username=username.data).first()
         if existing_user_username:
             raise ValidationError(
                 'That username already exists. Please choose a different one.')
@@ -48,17 +52,38 @@ class RegisterForm(FlaskForm):
 
 class LoginForm(FlaskForm):
     username = StringField(validators=[
-                           InputRequired(), Length(min=4, max=20)], render_kw={"placeholder": "Username"})
+            InputRequired(), 
+            Length(min=4, max=20)
+        ], 
+        render_kw={"placeholder": "Username"})
 
     password = PasswordField(validators=[
-                             InputRequired(), Length(min=8, max=80)], render_kw={"placeholder": "Password"})
+            InputRequired(), 
+            Length(min=8, max=80)
+        ], 
+        render_kw={"placeholder": "Password"})
 
     submit = SubmitField('Login')
 
 
 @app.route('/')
+@app.route('/home.html')
 def home():
     return render_template('home.html')
+
+
+@ app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = RegisterForm()
+
+    if form.validate_on_submit():
+        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        new_user = User(username=form.username.data, password=hashed_password)
+        db.session.add(new_user)
+        db.session.commit()
+        return redirect(url_for('login'))
+
+    return render_template('register.html', form=form)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -86,19 +111,8 @@ def logout():
     return redirect(url_for('login'))
 
 
-@ app.route('/register', methods=['GET', 'POST'])
-def register():
-    form = RegisterForm()
+with app.app_context():
+    db.create_all()
 
-    if form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(form.password.data)
-        new_user = User(username=form.username.data, password=hashed_password)
-        db.session.add(new_user)
-        db.session.commit()
-        return redirect(url_for('login'))
-
-    return render_template('register.html', form=form)
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
+if __name__ == '__main__':
+    app.run('0.0.0.0', port=80, debug=True)
